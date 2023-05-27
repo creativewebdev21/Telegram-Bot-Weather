@@ -16,6 +16,8 @@ This is a Telegram bot that provides weather updates for cities. Users can subsc
 - Subscribe to weather updates
 - Get current weather data for a specific city
 - Unsubscribe from weather updates
+- Get User's usernames
+- Get Usage Statistics
 
 ## Installation
 
