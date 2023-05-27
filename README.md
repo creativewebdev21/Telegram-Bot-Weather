@@ -21,7 +21,7 @@ This is a Telegram bot that provides weather updates for cities. Users can subsc
 1. Clone the repository:
 
    ```shell
-   git clone https://github.com/your-username/weather-telegram-bot.git
+   git clone https://github.com/Rajeshds20/weather-telegram-bot.git
    ```
 
 2. Install the dependencies:
