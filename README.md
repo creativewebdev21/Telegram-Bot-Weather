@@ -7,7 +7,7 @@ The application is a Telegram bot that provides weather updates for cities. User
 ![Node.js](https://img.shields.io/badge/Node.js-Backend-green)
 ![Express.js](https://img.shields.io/badge/Express.js-Framework-orange)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Database-red)
-![Rest API](https://img.shields.io/badge/Rest-Api-violet)
+![Rest API](https://img.shields.io/badge/REST-API-blueviolet)
 
 This is a Telegram bot that provides weather updates for cities. Users can subscribe to receive weather updates and get current weather data for specific cities.
 
