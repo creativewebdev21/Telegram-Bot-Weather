@@ -67,9 +67,9 @@ This is a Telegram bot that provides weather updates for cities. Users can subsc
 - Telegraf (Telegram Bot Framework)
 - Axios (HTTP requests)
 
-## Contributors
+## Creators
 
-- Rajesh Kumar
+- Rajesh 
 
 ## License
 
