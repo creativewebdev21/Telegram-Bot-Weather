@@ -4,6 +4,8 @@ const { Telegraf } = require('telegraf');
 const axios = require('axios');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const cors = require('cors');
+const bodyParser = require('body-parser');
 const User = require('./models/UserModel.js');
 const Subscriber = require('./models/SubscriberModel.js');
 const Usage = require('./models/UsageModel.js');
@@ -38,9 +40,15 @@ mongoose.connect(MONGO_URI, {
 // Initializing the express app
 const app = express();
 
+// configure cors
+app.use(cors());
+
+// configure body-parser
+app.use(bodyParser.json());
+
 // Configure the express app
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// app.use(express.urlencoded({ extended: true }));
 
 
 // Configure the routes
@@ -158,7 +166,9 @@ bot.command('unsubscribe', (ctx) => {
 });
 
 // Handling "/weather" command
-bot.command('weather', async (ctx) => {
+bot.command('weather', (ctx) => {
+
+    isListening = true;
 
     Subscriber.findOne({ userid: ctx.from.id })
         .then(async (subscriber) => {
@@ -197,8 +207,9 @@ bot.command('weather', async (ctx) => {
                     ctx.reply('Enter the name of the city to get weather data: ');
 
                     // Handle the user's response
-                    bot.hears(/.*/, async (ctx) => {
-                        if (isListening) {
+                    bot.hears(/.*/, (ctx) => {
+                        if (!isListening) {
+                            ctx.reply('No command Specified...');
                             return;
                         }
                         else {
@@ -210,35 +221,43 @@ bot.command('weather', async (ctx) => {
 
                             // Fetch weather data from OpenWeatherMap API using axios module
                             try {
-                                const response = await axios.get(apiUrl);
+                                axios.get(apiUrl)
+                                    .then((response) => {
 
-                                // Extract the weather data from the API response
-                                const weatherData = response.data;
+                                        // Extract the weather data from the API response
+                                        const weatherData = response.data;
 
-                                // Extract the relevant weather information from the API response
-                                const cityName = weatherData.city.name;
-                                const country = weatherData.city.country;
-                                const date_txt = weatherData.list[0].dt_txt;
-                                const date = date_txt.split(' ')[0];
-                                const temperature = weatherData.list[0].main.temp;
-                                const condition = weatherData.list[0].weather[0].description;
-                                const windSpeed = weatherData.list[0].wind.speed;
-                                const coord = weatherData.city.coord;
-                                const population = weatherData.city.population;
-                                const time = new Date().toLocaleTimeString();
+                                        // Extract the relevant weather information from the API response
+                                        const cityName = weatherData.city.name;
+                                        const country = weatherData.city.country;
+                                        const date_txt = weatherData.list[0].dt_txt;
+                                        const date = date_txt.split(' ')[0];
+                                        const temperature = weatherData.list[0].main.temp;
+                                        const condition = weatherData.list[0].weather[0].description;
+                                        const windSpeed = weatherData.list[0].wind.speed;
+                                        const coord = weatherData.city.coord;
+                                        const population = weatherData.city.population;
+                                        const time = new Date().toLocaleTimeString();
 
-                                // Send the weather update to subscribed user
-                                // const subscribedUsers = [ctx.from.id];
-                                // subscribedUsers.forEach((userId) => {
-                                //     bot.telegram.sendMessage(userId, `Current weather in ${city}: ${temperature}K, ${condition}`);
-                                // });
+                                        // Send the weather update to subscribed user
+                                        // const subscribedUsers = [ctx.from.id];
+                                        // subscribedUsers.forEach((userId) => {
+                                        //     bot.telegram.sendMessage(userId, `Current weather in ${city}: ${temperature}K, ${condition}`);
+                                        // });
 
-                                // Send the weather update to the user
-                                ctx.reply(`Current weather in ${cityName}, ${country} :- \nTemp: ${temperature}K, ${condition} \nDate: ${date}, Time: ${time}\nWind Speed: ${windSpeed}m/s\nPopulation: ${population}\nCoordinates: ${coord.lon}, ${coord.lat}`);
+                                        // Send the weather update to the user
+                                        ctx.reply(`Current weather in ${cityName}, ${country} :- \n\nTemp: ${temperature}K, ${condition} \nDate: ${date}, Time: ${time}\nWind Speed: ${windSpeed}m/s\nPopulation: ${population}\nCoordinates: ${coord.lon}, ${coord.lat}`);
 
-                                // Remove listening the user's response after correct city name entered
-                                bot.hears(/.*/, () => { });
-                                isListening = true;
+                                        // Remove listening the user's response after correct city name entered
+                                        // bot.hears(/.*/, () => { });
+                                        isListening = false;
+                                    })
+                                    .catch((error) => {
+                                        // Handle errors here
+                                        console.log('Error fetching weather data:', error.message);
+                                        ctx.reply('City not found!\nPlease enter a valid city name...');
+                                        return;
+                                    });
                             }
                             catch (error) {
                                 // Handle errors here

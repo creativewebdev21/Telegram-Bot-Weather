@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const usageSchema = new mongoose.Schema({
     username: {
         type: String,
-        required: true,
+        // required: true,
     },
     userid: {
         type: Number,
