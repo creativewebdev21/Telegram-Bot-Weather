@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const subscriberSchema = new mongoose.Schema({
     username: {
         type: String,
-        required: true,
+        // required: true,
     },
     userid: {
         type: Number,
