@@ -10,6 +10,7 @@ const User = require('./models/UserModel.js');
 const Subscriber = require('./models/SubscriberModel.js');
 const Usage = require('./models/UsageModel.js');
 const Stat = require('./models/StatModel.js');
+const BlockedUser = require('./models/BlockedUserModel.js');
 const router = require('./routes/dataRoute.js');
 
 // Declare the variables
@@ -20,7 +21,7 @@ let isListening = false;
 dotenv.config();
 
 // Load environment variables
-BOT_TOKEN = process.env.BOT_TOKEN;
+const BOT_TOKEN = process.env.BOT_TOKEN;
 const weatherAPIKey = process.env.WEATHER_API_KEY;
 const MONGO_URI = process.env.MONGO_URI;
 const PORT = process.env.PORT || 5000;
@@ -170,110 +171,124 @@ bot.command('weather', (ctx) => {
 
     isListening = true;
 
-    Subscriber.findOne({ userid: ctx.from.id })
-        .then(async (subscriber) => {
-            if (!subscriber) {
-                ctx.reply('You have not subscribed to get Weather Updates!\nUse /subscribe to subscribe to the bot.');
+    BlockedUser.findOne({ userid: ctx.from.id })
+        .then((blockedUser) => {
+            if (blockedUser) {
+                ctx.reply('You have been blocked from using this bot!\nContact the bot owner to unblock you.');
                 return;
             }
             else {
-                try {
-                    const userId = ctx.from.id;
-                    const username = ctx.from.username;
-
-                    // Update the usage data in the database
-                    const usage = new Usage({
-                        username: username,
-                        userid: userId,
-                    });
-                    usage.save()
-                        .then(() => {
-                            console.log('Usage saved to database!');
-                        })
-                        .catch((error) => {
-                            console.log('Error saving usage to database:', error.message);
-                        });
-
-                    // Update the stat data for user in the database
-                    Stat.updateOne({ userid: userId }, { $inc: { count: 1 } }, { upsert: true })
-                        .then(() => {
-                            console.log('Stat updated in database!');
-                        })
-                        .catch((error) => {
-                            console.log('Error updating stat in database:', error.message);
-                        });
-
-                    // Ask user for desired city name to get weather data
-                    ctx.reply('Enter the name of the city to get weather data: ');
-
-                    // Handle the user's response
-                    bot.hears(/.*/, (ctx) => {
-                        if (!isListening) {
-                            ctx.reply('No command Specified...');
+                // Search for the user's ID in the database
+                Subscriber.findOne({ userid: ctx.from.id })
+                    .then(async (subscriber) => {
+                        if (!subscriber) {
+                            ctx.reply('You have not subscribed to get Weather Updates!\nUse /subscribe to subscribe to the bot.');
                             return;
                         }
                         else {
-                            const messageText = ctx.message.text;
-                            const city = messageText;
-
-                            // Fetch URL for weather data request from OpenWeatherMap API
-                            const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?APPID=${weatherAPIKey}&q=${city}`;
-
-                            // Fetch weather data from OpenWeatherMap API using axios module
                             try {
-                                axios.get(apiUrl)
-                                    .then((response) => {
+                                const userId = ctx.from.id;
+                                const username = ctx.from.username;
 
-                                        // Extract the weather data from the API response
-                                        const weatherData = response.data;
-
-                                        // Extract the relevant weather information from the API response
-                                        const cityName = weatherData.city.name;
-                                        const country = weatherData.city.country;
-                                        const date_txt = weatherData.list[0].dt_txt;
-                                        const date = date_txt.split(' ')[0];
-                                        const temperature = weatherData.list[0].main.temp;
-                                        const condition = weatherData.list[0].weather[0].description;
-                                        const windSpeed = weatherData.list[0].wind.speed;
-                                        const coord = weatherData.city.coord;
-                                        const population = weatherData.city.population;
-                                        const time = new Date().toLocaleTimeString();
-
-                                        // Send the weather update to subscribed user
-                                        // const subscribedUsers = [ctx.from.id];
-                                        // subscribedUsers.forEach((userId) => {
-                                        //     bot.telegram.sendMessage(userId, `Current weather in ${city}: ${temperature}K, ${condition}`);
-                                        // });
-
-                                        // Send the weather update to the user
-                                        ctx.reply(`Current weather in ${cityName}, ${country} :- \n\nTemp: ${temperature}K, ${condition} \nDate: ${date}, Time: ${time}\nWind Speed: ${windSpeed}m/s\nPopulation: ${population}\nCoordinates: ${coord.lon}, ${coord.lat}`);
-
-                                        // Remove listening the user's response after correct city name entered
-                                        // bot.hears(/.*/, () => { });
-                                        isListening = false;
+                                // Update the usage data in the database
+                                const usage = new Usage({
+                                    username: username,
+                                    userid: userId,
+                                });
+                                usage.save()
+                                    .then(() => {
+                                        console.log('Usage saved to database!');
                                     })
                                     .catch((error) => {
-                                        // Handle errors here
-                                        console.log('Error fetching weather data:', error.message);
-                                        ctx.reply('City not found!\nPlease enter a valid city name...');
-                                        return;
+                                        console.log('Error saving usage to database:', error.message);
                                     });
+
+                                // Update the stat data for user in the database
+                                Stat.updateOne({ userid: userId }, { $inc: { count: 1 } }, { upsert: true })
+                                    .then(() => {
+                                        console.log('Stat updated in database!');
+                                    })
+                                    .catch((error) => {
+                                        console.log('Error updating stat in database:', error.message);
+                                    });
+
+                                // Ask user for desired city name to get weather data
+                                ctx.reply('Enter the name of the city to get weather data: ');
+
+                                // Handle the user's response
+                                bot.hears(/.*/, (ctx) => {
+                                    if (!isListening) {
+                                        ctx.reply('No command Specified...');
+                                        return;
+                                    }
+                                    else {
+                                        const messageText = ctx.message.text;
+                                        const city = messageText;
+
+                                        // Fetch URL for weather data request from OpenWeatherMap API
+                                        const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?APPID=${weatherAPIKey}&q=${city}`;
+
+                                        // Fetch weather data from OpenWeatherMap API using axios module
+                                        try {
+                                            axios.get(apiUrl)
+                                                .then((response) => {
+
+                                                    // Extract the weather data from the API response
+                                                    const weatherData = response.data;
+
+                                                    // Extract the relevant weather information from the API response
+                                                    const cityName = weatherData.city.name;
+                                                    const country = weatherData.city.country;
+                                                    const date_txt = weatherData.list[0].dt_txt;
+                                                    const date = date_txt.split(' ')[0];
+                                                    const temperature = weatherData.list[0].main.temp;
+                                                    const condition = weatherData.list[0].weather[0].description;
+                                                    const windSpeed = weatherData.list[0].wind.speed;
+                                                    const coord = weatherData.city.coord;
+                                                    const population = weatherData.city.population;
+                                                    const time = new Date().toLocaleTimeString();
+
+                                                    // Send the weather update to subscribed user
+                                                    // const subscribedUsers = [ctx.from.id];
+                                                    // subscribedUsers.forEach((userId) => {
+                                                    //     bot.telegram.sendMessage(userId, `Current weather in ${city}: ${temperature}K, ${condition}`);
+                                                    // });
+
+                                                    // Send the weather update to the user
+                                                    ctx.reply(`Current weather in ${cityName}, ${country} :- \n\nTemp: ${temperature}K, ${condition} \nDate: ${date}, Time: ${time}\nWind Speed: ${windSpeed}m/s\nPopulation: ${population}\nCoordinates: ${coord.lon}, ${coord.lat}`);
+
+                                                    // Remove listening the user's response after correct city name entered
+                                                    // bot.hears(/.*/, () => { });
+                                                    isListening = false;
+                                                })
+                                                .catch((error) => {
+                                                    // Handle errors here
+                                                    console.log('Error fetching weather data:', error.message);
+                                                    ctx.reply('City not found!\nPlease enter a valid city name...');
+                                                    return;
+                                                });
+                                        }
+                                        catch (error) {
+                                            // Handle errors here
+                                            console.log('Error fetching weather data:', error.message);
+                                            ctx.reply('City not found!\nPlease enter a valid city name...');
+                                            return;
+                                        }
+                                    }
+                                });
                             }
                             catch (error) {
                                 // Handle errors here
                                 console.log('Error fetching weather data:', error.message);
-                                ctx.reply('City not found!\nPlease enter a valid city name...');
-                                return;
+                                ctx.reply('Sorry, unable to fetch weather data at the moment.');
                             }
                         }
                     });
-                }
-                catch (error) {
-                    // Handle errors here
-                    console.log('Error fetching weather data:', error.message);
-                    ctx.reply('Sorry, unable to fetch weather data at the moment.');
-                }
             }
+        })
+        .catch((error) => {
+            console.log('Error fetching blocked user from database:', error.message);
+            ctx.reply('Sorry, You may seemed to be unable to access the weather data at the moment.');
         });
 });
 
