@@ -81,7 +81,7 @@ bot.start((ctx) => {
         .catch((error) => {
             console.log('Error saving user to database:', error);
         });
-    ctx.reply('Welcome to the WEATHER UPDATE bot!\nThis is a publicly available bot made by Rajesh to get the weather information of a particular city of your choice... \n\n\nTap /help - To Get help with commands\n\nMade with ❤️ by Rajesh');
+    ctx.reply('Welcome to the WEATHER UPDATE bot!\nThis is a publicly available bot made by Rajesh to get the weather information of a particular city of your choice... \n\n\nTap /help - To Get help with commands\n\nMade with ❤️ by Henry Ziad');
 });
 
 // Handling "/subscribe" command
