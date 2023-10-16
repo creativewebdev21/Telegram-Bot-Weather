@@ -72,7 +72,7 @@ This is a Telegram bot that provides weather updates for cities. Users can subsc
 
 ## Creators
 
-- Rajesh 
+- Henry Ziad
 
 ## License
 
